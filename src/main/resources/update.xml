@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<script>
+    <update>
+        <!-- To update a command:
+             Create a new element 'command'.
+             Use the attribute 'name' to specify the current name of the command.
+             With the attribute 'has_new_name' (true/false) you specify if the command data class has a new name.
+             The new name will be set as text of the element (see foo and hallo).
+             If the command does not have a new name, set the value of 'has_new_name' to 'false', you don't need to set a text. (see hel)
+         -->
+        <!-- command name="foo" has_new_name="true">bar</command>
+        <command name="hel" has_new_name="false"></command-->
+    </update>
+    <delete>
+        <!-- To delete a command:
+             Create a new element 'command'.
+             Specify the name of the command with the attribute 'name'.
+         -->
+        <command name="del1"/>
+        <command name="del2"/>
+        <command name="del3"/>
+        <command name="del4"/>
+    </delete>
+</script>
