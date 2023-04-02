@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+
+    <!-- The directory where the log files are being saved -->
+    <property name="LOG_DIR" value="var/log/"/>
+    <!-- the max size of an individually log file -->
+    <property name="LOG_FILE_MAX_SIZE" value="5MB"/>
+    <!-- the maximum amount of space that we want to dedicate to store log files -->
+    <property name="LOG_TOTAL_SIZE_CAP" value="100MB"/>
+    <!-- the amount of days we want to be able to keep the log files -->
+    <property name="LOG_FILE_MAX_HISTORY" value="30"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} | [%thread] %-5level %logger: %class{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_DIR}PackaBot.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} | [%thread] %-5level %logger: %class{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="Test" level="debug">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <!-- logger name="Bot" level="info">
+        <appender-ref ref="FILE"/>
+    </logger-->
+
+    <root level="debug">
+        <!-- appender-ref ref="FILE"/-->
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
