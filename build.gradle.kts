@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     implementation("com.sedmelluq:lavaplayer:1.3.78")
     // https://mvnrepository.com/artifact/mysql/mysql-connector-java
-    implementation("mysql:mysql-connector-java:8.0.31")
+    implementation("mysql:mysql-connector-java:8.0.32")
     // https://mvnrepository.com/artifact/com.opencsv/opencsv
     implementation("com.opencsv:opencsv:5.7.1")
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
@@ -46,9 +46,9 @@ dependencies {
 
 
 //     https://mvnrepository.com/artifact/net.sourceforge.htmlunit/htmlunit
-    implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
+//    implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
     // https://mvnrepository.com/artifact/xerces/xercesImpl
-    implementation("xerces:xercesImpl:2.11.0")
+//    implementation("xerces:xercesImpl:2.11.0")
 
 
 }
