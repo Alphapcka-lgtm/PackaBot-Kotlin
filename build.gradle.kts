@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.20"
+    kotlin("jvm") version "1.8.0"
     application
 }
 
@@ -13,6 +13,7 @@ repositories {
     maven {
         url = uri("https://m2.dv8tion.net/releases")
     }
+    maven { url = uri("https://jcenter.bintray.com/") }
 }
 
 dependencies {
@@ -36,14 +37,21 @@ dependencies {
     // https://mvnrepository.com/artifact/club.minnced/discord-webhooks
     implementation("club.minnced:discord-webhooks:0.8.2")
 
+    // for the spotify api
+    implementation("se.michaelthelin.spotify:spotify-web-api-java:8.0.0")
+
 //    for the YouTube api
 //     https://mvnrepository.com/artifact/com.google.api-client/google-api-client
-    implementation("com.google.api-client:google-api-client:1.15")
+    implementation("com.google.api-client:google-api-client:1.31.1")
 //     https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client-jetty
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
 //     https://mvnrepository.com/artifact/com.google.apis/google-api-services-youtube
-    implementation("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
+    implementation("com.google.apis:google-api-services-youtube:v3-rev20210915-1.32.1")
+    // https://mvnrepository.com/artifact/com.google.http-client/google-http-client-jackson2
+    implementation("com.google.http-client:google-http-client-jackson2:1.43.1")
 
+    // https://mvnrepository.com/artifact/khttp/khttp
+    implementation("khttp:khttp:1.0.0")
 
 //     https://mvnrepository.com/artifact/net.sourceforge.htmlunit/htmlunit
 //    implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
@@ -58,7 +66,7 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "16"
+    kotlinOptions.jvmTarget = "17"
 }
 
 tasks.register<Copy>("copyStartScripts") {

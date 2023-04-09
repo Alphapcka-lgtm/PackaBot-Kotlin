@@ -13,6 +13,7 @@ import java.sql.SQLException
 import java.util.*
 
 val LOG = JDALogger.getLog("Starting-Logger")
+lateinit var PROPERTIES: Properties
 
 /**
  * Main function
@@ -68,6 +69,8 @@ fun setupJda(): JDABuilder {
     val stream = object {}.javaClass.getResource("config.properties").openStream()
     val properties = Properties()
     properties.load(stream)
+
+    PROPERTIES = properties
 
 //    val builder = JDABuilder.create(properties.getProperty("token"), EnumSet.allOf(GatewayIntent::class.java))
     val builder = JDABuilder.create(properties.getProperty("token"), gatewayIntentions())
