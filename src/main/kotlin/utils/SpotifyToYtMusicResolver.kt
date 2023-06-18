@@ -129,8 +129,6 @@ class SpotifyToYtMusicResolver {
     }
 
     private fun resolvePlaylist(playlist: Playlist): Collection<String> {
-        // TODO
-
         val playlistTracks = LinkedList<Track>()
         for (pt in playlist.tracks.items) {
             if (pt.track.type == ModelObjectType.TRACK) {
