@@ -148,8 +148,6 @@ class SpotifyToYtMusicResolver {
             }
         }
 
-        // TODO
-
         val tracksUrl = ArrayList<String>(playlistTracks.size)
         for (pt in playlistTracks) {
             resolveTrack(pt).ifPresent { url ->
