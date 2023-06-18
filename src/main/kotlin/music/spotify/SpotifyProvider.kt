@@ -8,10 +8,13 @@ import se.michaelthelin.spotify.model_objects.specification.Album
 import se.michaelthelin.spotify.model_objects.specification.Playlist
 import se.michaelthelin.spotify.model_objects.specification.Track
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
 class SpotifyProvider(clientId: String, clientSecret: String) {
 
     private val LOG = JDALogger.getLog(SpotifyProvider::class.java)
+    private val THREADPOOL = Executors.newCachedThreadPool()
 
     companion object {
         private val SPOTIFY_PATTERN = "^https://open.spotify.com/(.*)/([\\w]*).*$".toRegex()
@@ -37,8 +40,36 @@ class SpotifyProvider(clientId: String, clientSecret: String) {
         clientCredentials = ClientCredentials.Builder().setExpiresIn(0).build()
     }
 
+    /**
+     * Attempts to retrieve the information album/playlist/track information of the given spotify url.
+     * @param spotifyUrl the spotify url to load.
+     * @return the retrieve information via a [SpotifyProviderResult]
+     * @throws IllegalArgumentException if the provided spotify url does not match the spotify url patten ([SPOTIFY_PATTERN])
+     * @throws IllegalStateException when the retrieved type by spotify is not [ModelObjectType.ALBUM], [ModelObjectType.PLAYLIST] or [ModelObjectType.TRACK].
+     */
+    fun retrieveAsync(spotifyUrl: String): CompletableFuture<SpotifyProviderResult> {
+        val future = CompletableFuture<SpotifyProviderResult>()
+        THREADPOOL.execute {
+            try {
+                future.complete(retrieve(spotifyUrl))
+            } catch (e: IllegalStateException) {
+                future.completeExceptionally(e)
+            } catch (e: IllegalArgumentException) {
+                future.completeExceptionally(e)
+            }
+        }
+        return future
+    }
+
+    /**
+     * Attempts to retrieve the information album/playlist/track information of the given spotify url.
+     * @param spotifyUrl the spotify url to load.
+     * @return the retrieve information via a [SpotifyProviderResult]
+     * @throws IllegalArgumentException if the provided spotify url does not match the spotify url patten ([SPOTIFY_PATTERN])
+     * @throws IllegalStateException when the retrieved type by spotify is not [ModelObjectType.ALBUM], [ModelObjectType.PLAYLIST] or [ModelObjectType.TRACK].
+     */
     @Throws(IllegalStateException::class, IllegalArgumentException::class)
-    fun load(spotifyUrl: String): SpotifyProviderResult {
+    fun retrieve(spotifyUrl: String): SpotifyProviderResult {
         if (!isSpotifyUrl(spotifyUrl)) {
             throw IllegalArgumentException("The provided url is not a spotify url!")
         }
