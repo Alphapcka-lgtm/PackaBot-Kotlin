@@ -10,10 +10,12 @@ version = "1.2"
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven {
         url = uri("https://m2.dv8tion.net/releases")
     }
     maven { url = uri("https://jcenter.bintray.com/") }
+
 }
 
 dependencies {
@@ -53,6 +55,10 @@ dependencies {
     // https://mvnrepository.com/artifact/khttp/khttp
     implementation("khttp:khttp:1.0.0")
 
+    // https://mvnrepository.com/artifact/com.konghq/unirest-java
+    implementation("com.konghq:unirest-java:3.14.2")
+    implementation("org.alphapacka.com:YtMusicApi-jvm:1.0-SNAPSHOT")
+
 //     https://mvnrepository.com/artifact/net.sourceforge.htmlunit/htmlunit
 //    implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
     // https://mvnrepository.com/artifact/xerces/xercesImpl
@@ -66,7 +72,7 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.register<Copy>("copyStartScripts") {

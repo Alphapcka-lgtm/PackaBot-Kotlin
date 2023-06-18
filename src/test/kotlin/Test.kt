@@ -5,9 +5,17 @@ import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import khttp.get
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import music.spotify.SpotifyProvider
+import org.alphapacka.com.YTMusic
+import org.alphapacka.com.enums.SearchFilters
 import se.michaelthelin.spotify.enums.ModelObjectType
+import se.michaelthelin.spotify.model_objects.specification.Track
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.Test
@@ -15,6 +23,7 @@ import kotlin.test.Test
 class Test {
 
     private val SPOTIFY_PATTERN = "^https://open.spotify.com/(.*)/([\\w]*).*$" //*?\?si=.*
+    private val ytMusic = YTMusic(null, null, null)
 
     @Test
     fun testSpotifyPattern() {
@@ -46,17 +55,26 @@ class Test {
     @Test
     fun testSpotify() {
         val result =
-            spotifyProvider.load("https://open.spotify.com/playlist/6T8SNVokqsvarerVQ7rIy2?si=a86de2a6aca4423b")
-
+            spotifyProvider.retrieve("https://open.spotify.com/playlist/5Hou76tCX8ef4FEM0RvaM0?si=30a75f87033c4352")
         when (result.type) {
             ModelObjectType.ALBUM -> {
                 val album = result.objectAsAlbum()
-                val track = album.tracks.items[0]
+                val tracks = album.tracks.items
+                val searchResults =
+                    ytMusic.search(album.name, SearchFilters.ALBUMS).stream().map { it.asAlbum }.toList()
+                searchResults.size
+                searchResults.forEach { searchResult ->
+                    if (searchResult.type == "Album") {
+                        println(searchResult)
+                    }
+                }
             }
 
             ModelObjectType.PLAYLIST -> {
                 val playlist = result.objectAsPlaylist()
-                val track = playlist.tracks.items[0]
+                val tracks = playlist.tracks.items
+                val t = tracks[0].track as Track
+                println()
             }
 
             ModelObjectType.TRACK -> {
@@ -92,33 +110,30 @@ class Test {
 
     @Test
     fun testYouTubeMusicSearch() {
-        //{'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}
-        //{'query': 'Feel Again - Armin van Buuren', 'params': 'EgWKAQIYAWoMEA4QChADEAQQCRAF', 'context': {'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}}
-        val ytmBaseApi = "https://music.youtube.com/youtubei/v1/" //later const
-        val endpoint = "search"
-        val ytmParams = "?alt=json&key=AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30" //later const
-        val query = "Feel Again - Armin van Buuren"
-        val body =
-            "{'query': '$query', 'params': 'EgWKAQIYAWoMEA4QChADEAQQCRAF', 'context': {'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}}"
-        val headers = mapOf(
-            "user-agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-            "accept" to "*/*",
-            "accept-encoding" to "gzip, deflate",
-            "content-type" to "application/json",
-            "content-encoding" to "gzip",
-            "origin" to "https://music.youtube.com",
-            "X-Goog-Visitor-Id" to "Cgt5dWRjN25Ub1QxSSiw1MahBg%3D%3D"
-        )
-        val response = get(
-            ytmBaseApi + endpoint + ytmParams,
-            json = body,
-            headers = headers,
-            cookies = mapOf("CONSENT" to "YES+1")
-        )
+        val playerManager = DefaultAudioPlayerManager()
+        AudioSourceManagers.registerRemoteSources(playerManager)
+        val future = playerManager.loadItem(
+            "https://music.youtube.com/playlist?list=OLAK5uy_mO7Xk_Vo9r28I6aI5O_f5B-WXfFIO5vzw",
+            object : AudioLoadResultHandler {
+                override fun trackLoaded(track: AudioTrack) {
+                    println("track loaded $track")
+                }
 
-        val gson = GsonBuilder().setPrettyPrinting().create()
-        val je = JsonParser.parseString(response.jsonObject.toString())
-        Files.writeString(Path("C:\\Users\\Michael\\Desktop\\Neuer Ordner\\spotpl.txt"), gson.toJson(je))
+                override fun playlistLoaded(playlist: AudioPlaylist) {
+                    println("playlist loaded: $playlist")
+                }
 
+                override fun noMatches() {
+                    println("no matches")
+                }
+
+                override fun loadFailed(exception: FriendlyException) {
+                    throw exception
+                }
+
+            })
+
+        future.get()
     }
+
 }
