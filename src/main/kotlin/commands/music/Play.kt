@@ -1,11 +1,16 @@
 package commands.music
 
-import PROPERTIES
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import commands.ExecutableSlashCommand
 import commands.SlashCommandAnnotation
 import commands.voice.JoinVoice
 import music.Player
+import music.TrackData
 import music.spotify.SpotifyProvider
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -13,11 +18,15 @@ import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.internal.utils.JDALogger
-import org.alphapacka.com.YTMusic
-import org.alphapacka.com.enums.SearchFilters
-import org.alphapacka.com.pojos.search.SearchResult
-import se.michaelthelin.spotify.enums.ModelObjectType
 import utils.RestActionExecutor
+import utils.SpotifyToYtMusicResolver
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
+import java.util.function.Function
+import java.util.stream.Collectors
+
 
 @SlashCommandAnnotation
 object Play : ExecutableSlashCommand, RestActionExecutor() {
@@ -27,10 +36,6 @@ object Play : ExecutableSlashCommand, RestActionExecutor() {
 
     override val name = "play"
     private const val URL_OPTION_NAME = "url"
-
-    private val spotifyProvider =
-        SpotifyProvider(PROPERTIES.getProperty("spotify.clientId"), PROPERTIES.getProperty("spotify.clientSecret"))
-    private val ytMusic = YTMusic(null, null, null)
 
     /**
      * Creates the slash command data.
@@ -67,50 +72,100 @@ object Play : ExecutableSlashCommand, RestActionExecutor() {
 
         // check if the given url is from spotify
         if (SpotifyProvider.isSpotifyUrl(url)) {
-            // search for the given item(s) on yt music
-            val res = try {
-                spotifyProvider.retrieve(url)
+
+            val resolver = SpotifyToYtMusicResolver()
+
+            val embedBuilder = EmbedBuilder()
+            embedBuilder.setDescription("Found a spotify url. Trying to resolve it with yt-music.\nPlease be patient.")
+            embedBuilder.setTimestamp(ZonedDateTime.now(ZoneOffset.UTC))
+            embedBuilder.setFooter("spotify", hook.interaction.user.avatarUrl)
+            val embed = hook.sendMessageEmbeds(embedBuilder.build()).submit()
+
+            val urls = try {
+                resolver.resolve(url)
             } catch (e: IllegalStateException) {
                 hook.sendMessage("The provided spotify item is invalid.\nWe are only able to try and find spotify albums, tracks and playlists.")
                 return
             }
 
-            when (res.type) {
-                ModelObjectType.TRACK -> {
-                    val track = res.objectAsTrack()
-                    val songsResult =
-                        ytMusic.search("${track.artists.joinToString()} - ${track.name}", SearchFilters.SONGS).stream()
-                            .map(SearchResult::asSong).toList()
-                    for (song in songsResult) {
-                        // TODO: Algorithm for finding a suitable object.
-                        // songs results don't have a `type`
-                        val spotifyArtistNames = track.artists.asList().map { el -> el.name }
-                        val ytArtistNames = song.artists.map { el -> el.name }
-                        var hasAllArtists = true
-                        for (ytArtist in ytArtistNames) {
-                            if (!spotifyArtistNames.contains(ytArtist)) {
-                                hasAllArtists = false
+            val futures = ArrayList<Future<Void>>(urls.size)
+
+            for (url in urls) {
+                val future = player.loadAndPlay(url, object : AudioLoadResultHandler {
+                    override fun trackLoaded(track: AudioTrack) {
+
+                        track.userData =
+                            TrackData(
+                                hook.interaction.user,
+                                "https://i.ytimg.com/vi/${track.identifier}/maxresdefault.jpg",
+                                null
+                            )
+                        player.trackScheduler.queue(track)
+
+
+                        // TODO
+                        if (player.audioPlayer.playingTrack == null) {
+                            player.audioPlayer.startTrack(track, true)
+                        }
+//                        restAction.mapToResult().queue { result ->
+//                            result.onFailure { error ->
+//                                DefaultPackaBotAudioLoadResultHandler.LOG.warn(
+//                                    "Error when sending playing track message!",
+//                                    error
+//                                )
+//                            }
+//                        }
+                        // can occur
+
+                    }
+
+                    override fun playlistLoaded(playlist: AudioPlaylist) {
+                        for (track in playlist.tracks) {
+                            track.userData = TrackData(
+                                hook.interaction.user,
+                                "https://i.ytimg.com/vi/${track.identifier}/maxresdefault.jpg",
+                                null
+                            )
+                            if (player.audioPlayer.playingTrack == null) {
+                                player.audioPlayer.playTrack(track)
                             }
                         }
 
-                        if (song.title == track.name && hasAllArtists) {
-                            
-                        }
+                        // can occur
                     }
+
+                    override fun noMatches() {
+                        TODO("Not yet implemented")
+                        // no matches should never occur
+                    }
+
+                    override fun loadFailed(exception: FriendlyException) {
+                        TODO("Not yet implemented")
+                        // well, shit happens
+                    }
+
+                })
+
+                futures.add(future)
+            }
+
+            val cfs: Array<CompletableFuture<Void>> = futures.toArray(arrayOfNulls(futures.size))
+
+            val fs = CompletableFuture.allOf(*cfs)
+                .thenApply(
+                    Function<Void, Any> { ignored: Void ->
+                        futures.stream()
+                            .map { obj -> obj.get() }
+                            .collect(Collectors.toList())
+                    }
+                )
+
+            fs.whenComplete { _, e ->
+                if (e != null) {
+                    throw e // TODO: what to do when an exception occurred
                 }
 
-                ModelObjectType.ALBUM -> {
-
-                }
-
-                ModelObjectType.PLAYLIST -> {
-
-                }
-
-                else -> {
-                    hook.sendMessage("The provided spotify item is invalid.\nWe are only able to try and find spotify albums, tracks and playlists.")
-                    return
-                }
+                // TODO
             }
 
             return // always return here, [loadAndPlay] will never find something from a spotify url!
