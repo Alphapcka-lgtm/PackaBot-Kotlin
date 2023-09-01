@@ -49,7 +49,7 @@ class PackaBot(private val jdaBuilder: JDABuilder, m_DatabaseConnection: Connect
             Activity.of(Activity.ActivityType.PLAYING, "Music! maybe...."),
             false
         )
-
+        
         LOG.info("Connected to guilds [${m_Jda.guilds}]")
         LOG.info("users: ${m_Jda.users}")
 
