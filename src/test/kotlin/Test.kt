@@ -5,17 +5,20 @@ import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import khttp.get
 import music.spotify.SpotifyProvider
 import org.alphapacka.com.YTMusic
 import org.alphapacka.com.enums.SearchFilters
+import org.alphapacka.com.pojos.ResultTypes
 import se.michaelthelin.spotify.enums.ModelObjectType
 import se.michaelthelin.spotify.model_objects.specification.Track
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.CookieManager
+import java.net.CookiePolicy
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.Test
@@ -64,7 +67,7 @@ class Test {
                     ytMusic.search(album.name, SearchFilters.ALBUMS).stream().map { it.asAlbum }.toList()
                 searchResults.size
                 searchResults.forEach { searchResult ->
-                    if (searchResult.type == "Album") {
+                    if (searchResult.resultType == ResultTypes.ALBUM) {
                         println(searchResult)
                     }
                 }
@@ -110,30 +113,61 @@ class Test {
 
     @Test
     fun testYouTubeMusicSearch() {
-        val playerManager = DefaultAudioPlayerManager()
-        AudioSourceManagers.registerRemoteSources(playerManager)
-        val future = playerManager.loadItem(
-            "https://music.youtube.com/playlist?list=OLAK5uy_mO7Xk_Vo9r28I6aI5O_f5B-WXfFIO5vzw",
-            object : AudioLoadResultHandler {
-                override fun trackLoaded(track: AudioTrack) {
-                    println("track loaded $track")
-                }
+        //{'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}
+        //{'query': 'Feel Again - Armin van Buuren', 'params': 'EgWKAQIYAWoMEA4QChADEAQQCRAF', 'context': {'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}}
+        val ytmBaseApi = "https://music.youtube.com/youtubei/v1/" //later const
+        val endpoint = "search"
+        val ytmParams = "?alt=json&key=AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30" //later const
+        val query = "Feel Again - Armin van Buuren"
+        val body =
+            "{'query': '$query', 'params': 'EgWKAQIYAWoMEA4QChADEAQQCRAF', 'context': {'client': {'clientName': 'WEB_REMIX', 'clientVersion': '1.20230408.01.00', 'hl': 'en'}, 'user': {}}}"
+        val headers = mapOf(
+            "user-agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+            "accept" to "*/*",
+            "accept-encoding" to "gzip, deflate",
+            "content-type" to "application/json",
+            "content-encoding" to "gzip",
+            "origin" to "https://music.youtube.com",
+            "X-Goog-Visitor-Id" to "Cgt5dWRjN25Ub1QxSSiw1MahBg%3D%3D"
+        )
 
-                override fun playlistLoaded(playlist: AudioPlaylist) {
-                    println("playlist loaded: $playlist")
-                }
+        println(headers.toString())
 
-                override fun noMatches() {
-                    println("no matches")
-                }
+        val httpClient = HttpClient.newBuilder().build()
+        val httpRequestBuilder = java.net.http.HttpRequest.newBuilder(URI(ytmBaseApi + endpoint + ytmParams))
+        httpRequestBuilder.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+        for(header in headers.entries){
+            httpRequestBuilder.header(header.key, header.value)
+        }
+        val httpRequest = httpRequestBuilder.build()
+        println(httpRequest.headers())
+        println(httpRequest.headers().map())
+        val response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(Charsets.UTF_32))
 
-                override fun loadFailed(exception: FriendlyException) {
-                    throw exception
-                }
+        println("Status code: ${response.statusCode()}")
+//        val input = BufferedReader(InputStreamReader(response.body()))
+//        var inputLine: String? = null
+//        val content = StringBuffer()
+//        while (input.readLine().also { inputLine = it } != null) {
+//            content.append(inputLine)
+//        }
+//        println("body:")
+//        println(response.body())
 
-            })
+        println(response.version())
 
-        future.get()
+//        println(headers.toString())
+
+//        val response = get(
+//            ytmBaseApi + endpoint + ytmParams,
+//            json = body,
+//            headers = headers,
+//            cookies = mapOf("CONSENT" to "YES+1")
+//        )
+
+//        val gson = GsonBuilder().setPrettyPrinting().create()
+//        val je = JsonParser.parseString(response.jsonObject.toString())
+//        Files.writeString(Path("C:\\Users\\Michael\\Desktop\\Neuer Ordner\\spotpl.txt"), gson.toJson(je))
+
     }
-
 }

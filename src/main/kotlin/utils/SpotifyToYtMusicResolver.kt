@@ -79,7 +79,7 @@ class SpotifyToYtMusicResolver {
             }
 
             if (song.title == track.name && hasAllArtists) {
-                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${song.videoId}")
+                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${song.video}")
             }
         }
 
@@ -98,7 +98,7 @@ class SpotifyToYtMusicResolver {
             }
 
             if (video.title == track.name && hasAllArtists) {
-                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${video.videoId}")
+                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${video.video}")
             }
         }
 

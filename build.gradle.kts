@@ -20,24 +20,24 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("net.dv8tion:JDA:5.0.0-beta.6")
+    implementation("net.dv8tion:JDA:5.0.0-beta.24")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api
     implementation("com.google.code.findbugs:jsr305:3.0.2")
     // https://mvnrepository.com/artifact/org.reflections/reflections
     implementation("org.reflections:reflections:0.10.2")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
-    implementation("com.sedmelluq:lavaplayer:1.3.78")
-    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
-    implementation("mysql:mysql-connector-java:8.0.32")
+    implementation("dev.arbjerg:lavaplayer:2.1.2")
+    // https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
+    implementation("com.mysql:mysql-connector-j:8.4.0")
     // https://mvnrepository.com/artifact/com.opencsv/opencsv
-    implementation("com.opencsv:opencsv:5.7.1")
+    implementation("com.opencsv:opencsv:5.9")
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    implementation("ch.qos.logback:logback-classic:1.4.4")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-core
-    implementation("ch.qos.logback:logback-core:1.4.4")
+    implementation("ch.qos.logback:logback-core:1.5.6")
     // https://mvnrepository.com/artifact/club.minnced/discord-webhooks
-    implementation("club.minnced:discord-webhooks:0.8.2")
+    implementation("club.minnced:discord-webhooks:0.8.4")
 
     // for the spotify api
     implementation("se.michaelthelin.spotify:spotify-web-api-java:8.0.0")
