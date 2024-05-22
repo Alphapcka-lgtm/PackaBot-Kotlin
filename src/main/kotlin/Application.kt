@@ -7,10 +7,7 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.internal.utils.JDALogger
 import utils.ExceptionWebhook
-import java.io.File
-import java.io.FileInputStream
-import java.nio.file.Files
-import java.nio.file.Path
+import java.io.*
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -19,7 +16,8 @@ import java.util.*
 val LOG = JDALogger.getLog("Starting-Logger")
 lateinit var PROPERTIES: Properties
 lateinit var DATABASE_CONFIG: DatabaseConfig
-private val PROPERTIES_DIR = "val\\properties\\"
+private val PROPERTIES_FILE_NAME = "config.properties"
+private val DB_CONFIG_FILE_NAME = "database_conf.properties"
 
 /**
  * Main function
@@ -103,23 +101,47 @@ private fun gatewayIntentions(): Collection<GatewayIntent> {
     )
 }
 
-private fun loadProperties(){
-    val propDir = File(PROPERTIES_DIR)
-    if(!propDir.exists()){
-        propDir.mkdirs()
-        throw Exception("Unable to load Properties! ")
+@Throws(FileNotFoundException::class)
+private fun loadProperties() {
+    val configFile = File(PROPERTIES_FILE_NAME)
+    val dbConfigFile = File(DB_CONFIG_FILE_NAME)
+    var error = false
+    if (!configFile.exists()) {
+        error = true
+        createConfigFile(configFile, "config.properties.blueprint.txt")
     }
-    val configDir = File(PROPERTIES_DIR + "\\config.properties")
-    if(!configDir.exists()){
-        configDir.mkdirs()
-        throw Exception("Unable to load Properties! ")
+    if (!dbConfigFile.exists()) {
+        error = true
+        createConfigFile(dbConfigFile, "database_conf.properties.blueprint.txt")
     }
-    val dbConfigDir = File(PROPERTIES_DIR + "\\database_conf.properties")
-    if(!dbConfigDir.exists()){
-        dbConfigDir.mkdirs()
-        throw Exception("Unable to load Properties! ")
+
+    if (error) {
+        throw FileNotFoundException("Config file not found!")
     }
-    
+
+    PROPERTIES = Properties()
+    PROPERTIES.load(FileReader(PROPERTIES_FILE_NAME))
+
+    val dbProperties = Properties()
+    dbProperties.load(FileReader(DB_CONFIG_FILE_NAME))
+    DATABASE_CONFIG = DatabaseConfig.loadFromProperties(dbProperties)
+}
+
+private fun createConfigFile(file: File, bpRessourceFile: String) {
+    if (!file.createNewFile()) {
+        throw IOException("Unable to create file: " + file.path)
+    }
+
+    val input = ClassLoader.getSystemClassLoader().getResourceAsStream("data/$bpRessourceFile")
+    val output = FileWriter(file)
+    var c = input.read()
+    while (c != -1) {
+        output.write(c)
+        c = input.read()
+    }
+    input.close()
+    output.flush()
+    output.close()
 }
 
 /**
@@ -130,11 +152,10 @@ private fun loadProperties(){
 fun createDatabaseConnection(): Connection {
     try {
         Class.forName("com.mysql.cj.jdbc.Driver")
-        val databaseConfig = DatabaseConfig.loadFromResource("database_conf.properties")
         return DriverManager.getConnection(
-            databaseConfig.databaseUrl,
-            databaseConfig.databaseUser,
-            databaseConfig.databasePassword
+            DATABASE_CONFIG.databaseUrl,
+            DATABASE_CONFIG.databaseUser,
+            DATABASE_CONFIG.databasePassword
         )
     } catch (e: Exception) {
         throw SQLException(e)
