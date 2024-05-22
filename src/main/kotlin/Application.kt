@@ -7,6 +7,10 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.internal.utils.JDALogger
 import utils.ExceptionWebhook
+import java.io.File
+import java.io.FileInputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -14,6 +18,8 @@ import java.util.*
 
 val LOG = JDALogger.getLog("Starting-Logger")
 lateinit var PROPERTIES: Properties
+lateinit var DATABASE_CONFIG: DatabaseConfig
+private val PROPERTIES_DIR = "val\\properties\\"
 
 /**
  * Main function
@@ -95,6 +101,25 @@ private fun gatewayIntentions(): Collection<GatewayIntent> {
         GatewayIntent.MESSAGE_CONTENT,
         GatewayIntent.GUILD_MESSAGE_REACTIONS,
     )
+}
+
+private fun loadProperties(){
+    val propDir = File(PROPERTIES_DIR)
+    if(!propDir.exists()){
+        propDir.mkdirs()
+        throw Exception("Unable to load Properties! ")
+    }
+    val configDir = File(PROPERTIES_DIR + "\\config.properties")
+    if(!configDir.exists()){
+        configDir.mkdirs()
+        throw Exception("Unable to load Properties! ")
+    }
+    val dbConfigDir = File(PROPERTIES_DIR + "\\database_conf.properties")
+    if(!dbConfigDir.exists()){
+        dbConfigDir.mkdirs()
+        throw Exception("Unable to load Properties! ")
+    }
+    
 }
 
 /**
