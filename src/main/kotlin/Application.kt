@@ -78,7 +78,6 @@ fun main(args: Array<String>) {
 
 /**
  * Sets up the jda connection.
- * @param consumer consumer of the jda builder to make custom changes.
  * @return the created jda instance
  */
 fun setupJda(): JDABuilder {
