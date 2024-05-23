@@ -7,7 +7,10 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.internal.utils.JDALogger
 import utils.ExceptionWebhook
-import java.io.*
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -31,17 +34,7 @@ fun main(args: Array<String>) {
         // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
         LOG.info("Program arguments: ${args.joinToString()}")
 
-        try{
-            loadProperties()
-        }catch (e: FileNotFoundException){
-            println("Files '$PROPERTIES_FILE_NAME' and '$DB_CONFIG_FILE_NAME' where not found!")
-            println("Config files '$PROPERTIES_FILE_NAME' and '$DB_CONFIG_FILE_NAME' have been created and need to be configurated by the user.")
-            return@runBlocking
-        }
-        catch (e: Exception){
-            LOG.error("Unable to load properties!", e)
-            return@runBlocking
-        }
+        if (!loadProperties()) return@runBlocking
 
         val databaseConnection = async {
             var databaseConnection: Connection? = null
@@ -106,32 +99,52 @@ private fun gatewayIntentions(): Collection<GatewayIntent> {
     )
 }
 
-@Throws(FileNotFoundException::class)
-private fun loadProperties() {
+private fun loadProperties(): Boolean {
     val configFile = File(PROPERTIES_FILE_NAME)
     val dbConfigFile = File(DB_CONFIG_FILE_NAME)
-    var error = false
+    var filesExists = true
     if (!configFile.exists()) {
-        error = true
-        createConfigFile(configFile, "config.properties.blueprint.txt")
+        filesExists = false
+        LOG.warn("Config file $configFile was not found!")
+        try {
+            createConfigFile(configFile, "config.properties.blueprint.txt")
+        } catch (e: Exception) {
+            LOG.error("Unable to create config file $configFile!", e)
+            return false
+        }
         LOG.info("Created config file '$configFile' from blueprint!")
+        println("Please configure the config file $configFile!")
     }
     if (!dbConfigFile.exists()) {
-        error = true
-        createConfigFile(dbConfigFile, "database_conf.properties.blueprint.txt")
+        filesExists = false
+        LOG.warn("Config file for database $dbConfigFile was not found!")
+        try {
+            createConfigFile(dbConfigFile, "database_conf.properties.blueprint.txt")
+        } catch (e: Exception) {
+            LOG.error("Unable to create config file $dbConfigFile!", e)
+            return false
+        }
         LOG.info("Created db config file '$dbConfigFile' from blueprint!")
+        println("Please configure the database config file $dbConfigFile!")
     }
 
-    if (error) {
-        throw FileNotFoundException("Config file not found!")
+    if (!filesExists) {
+        return false
     }
 
-    PROPERTIES = Properties()
-    PROPERTIES.load(FileReader(PROPERTIES_FILE_NAME))
+    try {
+        PROPERTIES = Properties()
+        PROPERTIES.load(FileReader(PROPERTIES_FILE_NAME))
 
-    val dbProperties = Properties()
-    dbProperties.load(FileReader(DB_CONFIG_FILE_NAME))
-    DATABASE_CONFIG = DatabaseConfig.loadFromProperties(dbProperties)
+        val dbProperties = Properties()
+        dbProperties.load(FileReader(DB_CONFIG_FILE_NAME))
+        DATABASE_CONFIG = DatabaseConfig.loadFromProperties(dbProperties)
+    } catch (e: Exception) {
+        LOG.error("Error when loading config files!", e)
+        return false
+    }
+
+    return true
 }
 
 private fun createConfigFile(file: File, bpRessourceFile: String) {
