@@ -31,6 +31,18 @@ fun main(args: Array<String>) {
         // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
         LOG.info("Program arguments: ${args.joinToString()}")
 
+        try{
+            loadProperties()
+        }catch (e: FileNotFoundException){
+            println("Files '$PROPERTIES_FILE_NAME' and '$DB_CONFIG_FILE_NAME' where not found!")
+            println("Config files '$PROPERTIES_FILE_NAME' and '$DB_CONFIG_FILE_NAME' have been created and need to be configurated by the user.")
+            return@runBlocking
+        }
+        catch (e: Exception){
+            LOG.error("Unable to load properties!", e)
+            return@runBlocking
+        }
+
         val databaseConnection = async {
             var databaseConnection: Connection? = null
             for (i in 0..1) {
@@ -70,14 +82,8 @@ fun main(args: Array<String>) {
  * @return the created jda instance
  */
 fun setupJda(): JDABuilder {
-    val stream = object {}.javaClass.getResource("config.properties").openStream()
-    val properties = Properties()
-    properties.load(stream)
-
-    PROPERTIES = properties
-
 //    val builder = JDABuilder.create(properties.getProperty("token"), EnumSet.allOf(GatewayIntent::class.java))
-    val builder = JDABuilder.create(properties.getProperty("token"), gatewayIntentions())
+    val builder = JDABuilder.create(PROPERTIES.getProperty("token"), gatewayIntentions())
 
     builder.setActivity(Activity.of(Activity.ActivityType.COMPETING, "Initializing"))
     builder.setStatus(OnlineStatus.DO_NOT_DISTURB)
@@ -109,10 +115,12 @@ private fun loadProperties() {
     if (!configFile.exists()) {
         error = true
         createConfigFile(configFile, "config.properties.blueprint.txt")
+        LOG.info("Created config file '$configFile' from blueprint!")
     }
     if (!dbConfigFile.exists()) {
         error = true
         createConfigFile(dbConfigFile, "database_conf.properties.blueprint.txt")
+        LOG.info("Created db config file '$dbConfigFile' from blueprint!")
     }
 
     if (error) {
