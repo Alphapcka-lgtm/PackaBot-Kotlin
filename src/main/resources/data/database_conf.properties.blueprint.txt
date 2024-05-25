@@ -1,0 +1,6 @@
+#Url to the database connection.
+database=<url to connect to db>
+#User of the database.
+database.user=<user id>
+#The password of the database
+database.password=<password>
