@@ -6,16 +6,14 @@ import com.google.api.services.youtube.YouTube
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import music.spotify.SpotifyProvider
-import yt_music.enums.SearchFilters
-import yt_music.pojos.ResultTypes
 import se.michaelthelin.spotify.enums.ModelObjectType
 import se.michaelthelin.spotify.model_objects.specification.Track
 import yt_music.YTMusic
+import yt_music.enums.SearchFilters
+import yt_music.pojos.ResultTypes
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpResponse
-import java.nio.file.Files
-import kotlin.io.path.Path
 import kotlin.test.Test
 
 class Test {
@@ -102,7 +100,7 @@ class Test {
         for (result in searchResultList) {
             val gson = GsonBuilder().setPrettyPrinting().create()
             val je = JsonParser.parseString(result.toString())
-            Files.writeString(Path("C:\\Users\\Michael\\Desktop\\Neuer Ordner\\spotpl.txt"), gson.toJson(je))
+            // Files.writeString(Path("C:\\Users\\Michael\\Desktop\\Neuer Ordner\\spotpl.txt"), gson.toJson(je))
         }
     }
 

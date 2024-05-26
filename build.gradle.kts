@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.8.0"
     application
 }
 
@@ -15,6 +15,7 @@ repositories {
         url = uri("https://m2.dv8tion.net/releases")
     }
     maven { url = uri("https://jcenter.bintray.com/") }
+    maven { url = uri("https://jitpack.io") }
 
 }
 
@@ -57,7 +58,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.konghq/unirest-java
     implementation("com.konghq:unirest-java:3.14.2")
-    
+
     // do to build issue this dependency has been directly included into the project with the package yt_music
     // implementation("org.alphapacka.com:YtMusicApi-jvm:1.0-SNAPSHOT")
 
