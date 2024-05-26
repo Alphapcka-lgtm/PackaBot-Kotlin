@@ -5,17 +5,12 @@ import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import khttp.get
 import music.spotify.SpotifyProvider
-import org.alphapacka.com.YTMusic
-import org.alphapacka.com.enums.SearchFilters
-import org.alphapacka.com.pojos.ResultTypes
+import yt_music.enums.SearchFilters
+import yt_music.pojos.ResultTypes
 import se.michaelthelin.spotify.enums.ModelObjectType
 import se.michaelthelin.spotify.model_objects.specification.Track
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.CookieManager
-import java.net.CookiePolicy
+import yt_music.YTMusic
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpResponse
@@ -136,7 +131,7 @@ class Test {
         val httpClient = HttpClient.newBuilder().build()
         val httpRequestBuilder = java.net.http.HttpRequest.newBuilder(URI(ytmBaseApi + endpoint + ytmParams))
         httpRequestBuilder.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
-        for(header in headers.entries){
+        for (header in headers.entries) {
             httpRequestBuilder.header(header.key, header.value)
         }
         val httpRequest = httpRequestBuilder.build()

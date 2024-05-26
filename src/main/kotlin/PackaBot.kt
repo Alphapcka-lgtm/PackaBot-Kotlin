@@ -49,7 +49,7 @@ class PackaBot(private val jdaBuilder: JDABuilder, m_DatabaseConnection: Connect
             Activity.of(Activity.ActivityType.PLAYING, "Music! maybe...."),
             false
         )
-        
+
         LOG.info("Connected to guilds [${m_Jda.guilds}]")
         LOG.info("users: ${m_Jda.users}")
 
@@ -101,7 +101,11 @@ class PackaBot(private val jdaBuilder: JDABuilder, m_DatabaseConnection: Connect
                     m_DatabaseConnection = null
                 }
                 m_DatabaseConnection = createDatabaseConnection()
-                LOG.info("Connected to the database.")
+                if (m_DatabaseConnection != null) {
+                    LOG.info("Connected to the database.")
+                } else {
+                    LOG.info("Database config is not given, unable to connect.")
+                }
             } catch (e: SQLException) {
                 LOG.warn("Unable to connect to database! Trying to connect again in $delayMin min!", e)
             }
