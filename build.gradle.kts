@@ -57,7 +57,9 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.konghq/unirest-java
     implementation("com.konghq:unirest-java:3.14.2")
-    implementation("org.alphapacka.com:YtMusicApi-jvm:1.0-SNAPSHOT")
+    
+    // do to build issue this dependency has been directly included into the project with the package yt_music
+    // implementation("org.alphapacka.com:YtMusicApi-jvm:1.0-SNAPSHOT")
 
 //     https://mvnrepository.com/artifact/net.sourceforge.htmlunit/htmlunit
 //    implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")

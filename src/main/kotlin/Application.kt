@@ -7,6 +7,10 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.internal.utils.JDALogger
 import utils.ExceptionWebhook
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -14,6 +18,9 @@ import java.util.*
 
 val LOG = JDALogger.getLog("Starting-Logger")
 lateinit var PROPERTIES: Properties
+var DATABASE_CONFIG: DatabaseConfig? = null
+private val PROPERTIES_FILE_NAME = "config.properties"
+private val DB_CONFIG_FILE_NAME = "database_conf.properties"
 
 /**
  * Main function
@@ -26,6 +33,8 @@ fun main(args: Array<String>) {
         // Try adding program arguments via Run/Debug configuration.
         // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
         LOG.info("Program arguments: ${args.joinToString()}")
+
+        if (!loadProperties()) return@runBlocking
 
         val databaseConnection = async {
             var databaseConnection: Connection? = null
@@ -62,18 +71,11 @@ fun main(args: Array<String>) {
 
 /**
  * Sets up the jda connection.
- * @param consumer consumer of the jda builder to make custom changes.
  * @return the created jda instance
  */
 fun setupJda(): JDABuilder {
-    val stream = object {}.javaClass.getResource("config.properties").openStream()
-    val properties = Properties()
-    properties.load(stream)
-
-    PROPERTIES = properties
-
 //    val builder = JDABuilder.create(properties.getProperty("token"), EnumSet.allOf(GatewayIntent::class.java))
-    val builder = JDABuilder.create(properties.getProperty("token"), gatewayIntentions())
+    val builder = JDABuilder.create(PROPERTIES.getProperty("token"), gatewayIntentions())
 
     builder.setActivity(Activity.of(Activity.ActivityType.COMPETING, "Initializing"))
     builder.setStatus(OnlineStatus.DO_NOT_DISTURB)
@@ -97,19 +99,114 @@ private fun gatewayIntentions(): Collection<GatewayIntent> {
     )
 }
 
+private fun loadProperties(): Boolean {
+    val configFile = File(PROPERTIES_FILE_NAME)
+    val dbConfigFile = File(DB_CONFIG_FILE_NAME)
+    var filesExists = true
+    if (!configFile.exists()) {
+        filesExists = false
+        LOG.warn("Config file $configFile was not found!")
+        try {
+            createConfigFile(configFile, "config.properties.blueprint.txt")
+        } catch (e: Exception) {
+            LOG.error("Unable to create config file $configFile!", e)
+            return false
+        }
+        LOG.info("Created config file '$configFile' from blueprint!")
+        println("Please configure the config file $configFile!")
+    }
+    if (!dbConfigFile.exists()) {
+        filesExists = false
+        LOG.warn("Config file for database $dbConfigFile was not found!")
+        try {
+            createConfigFile(dbConfigFile, "database_conf.properties.blueprint.txt")
+        } catch (e: Exception) {
+            LOG.error("Unable to create config file $dbConfigFile!", e)
+            return false
+        }
+        LOG.info("Created db config file '$dbConfigFile' from blueprint!")
+        println("Please configure the database config file $dbConfigFile!")
+    }
+
+    if (!filesExists) {
+        return false
+    }
+
+    try {
+        PROPERTIES = Properties()
+        PROPERTIES.load(FileReader(PROPERTIES_FILE_NAME))
+    } catch (e: Exception) {
+        LOG.error("Error when loading config files!", e)
+        return false
+    }
+
+    try {
+        val dbProperties = Properties()
+        dbProperties.load(FileReader(DB_CONFIG_FILE_NAME))
+        DATABASE_CONFIG = DatabaseConfig.loadFromProperties(dbProperties)
+    } catch (e: Exception) {
+        LOG.warn("Error when loading db config!", e)
+        println("Error when loading config file for database access.")
+        println("Do you want to move forward without? (y/n)")
+        var validInput = false
+        while (validInput == false) {
+            val input = readln()
+            input.trim()
+            when (input.lowercase()) {
+                "y", "yes" -> {
+                    println("Moving forward without database.")
+                    DATABASE_CONFIG = null
+                    validInput = true
+                }
+
+                "n", "no" -> {
+                    println("Please configure database in file $DB_CONFIG_FILE_NAME")
+                    return false
+                }
+
+                else -> {
+                    println("Invalid input!")
+                    println("Do you want to move forward without? (y/n)")
+                }
+            }
+        }
+    }
+
+    return true
+}
+
+private fun createConfigFile(file: File, bpRessourceFile: String) {
+    if (!file.createNewFile()) {
+        throw IOException("Unable to create file: " + file.path)
+    }
+
+    val input = ClassLoader.getSystemClassLoader().getResourceAsStream("data/$bpRessourceFile")
+    val output = FileWriter(file)
+    var c = input.read()
+    while (c != -1) {
+        output.write(c)
+        c = input.read()
+    }
+    input.close()
+    output.flush()
+    output.close()
+}
+
 /**
  * Creates the database connection.
  * @return the database connection.
  * @throws SQLException if the database connection could not be created.
  */
-fun createDatabaseConnection(): Connection {
+fun createDatabaseConnection(): Connection? {
+    if (DATABASE_CONFIG == null) {
+        return null
+    }
     try {
         Class.forName("com.mysql.cj.jdbc.Driver")
-        val databaseConfig = DatabaseConfig.loadFromResource("database_conf.properties")
         return DriverManager.getConnection(
-            databaseConfig.databaseUrl,
-            databaseConfig.databaseUser,
-            databaseConfig.databasePassword
+            DATABASE_CONFIG!!.databaseUrl,
+            DATABASE_CONFIG!!.databaseUser,
+            DATABASE_CONFIG!!.databasePassword
         )
     } catch (e: Exception) {
         throw SQLException(e)
