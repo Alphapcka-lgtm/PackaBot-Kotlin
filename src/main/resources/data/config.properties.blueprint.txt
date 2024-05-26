@@ -2,6 +2,8 @@
 #when multiple setting multiple values for a property seperate them from one another via ','
 #token is the API Token for the discord api
 token=<discord bot api token>
+#url to a possible discord webhook to use for status updates (optional, barely used)
+status_hook_url=
 #Spotify-Api
 spotify.clientId=9c8be88b1ea4444098ea8ee86970be90
 spotify.clientSecret=3d7592c87c0444a5a4b54394b21b5b2f
