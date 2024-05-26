@@ -1,0 +1,9 @@
+#Configuration of the PackaBot
+#when multiple setting multiple values for a property seperate them from one another via ','
+#token is the API Token for the discord api
+token=<discord bot api token>
+#url to a possible discord webhook to use for status updates (optional, barely used)
+status_hook_url=
+#Spotify-Api
+spotify.clientId=
+spotify.clientSecret=
