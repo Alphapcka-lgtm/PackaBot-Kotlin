@@ -18,7 +18,7 @@ import java.util.*
 
 val LOG = JDALogger.getLog("Starting-Logger")
 lateinit var PROPERTIES: Properties
-lateinit var DATABASE_CONFIG: DatabaseConfig
+var DATABASE_CONFIG: DatabaseConfig? = null
 private val PROPERTIES_FILE_NAME = "config.properties"
 private val DB_CONFIG_FILE_NAME = "database_conf.properties"
 
@@ -135,13 +135,41 @@ private fun loadProperties(): Boolean {
     try {
         PROPERTIES = Properties()
         PROPERTIES.load(FileReader(PROPERTIES_FILE_NAME))
+    } catch (e: Exception) {
+        LOG.error("Error when loading config files!", e)
+        return false
+    }
 
+    try {
         val dbProperties = Properties()
         dbProperties.load(FileReader(DB_CONFIG_FILE_NAME))
         DATABASE_CONFIG = DatabaseConfig.loadFromProperties(dbProperties)
     } catch (e: Exception) {
-        LOG.error("Error when loading config files!", e)
-        return false
+        LOG.warn("Error when loading db config!", e)
+        println("Error when loading config file for database access.")
+        println("Do you want to move forward without? (y/n)")
+        var validInput = false
+        while (validInput == false) {
+            val input = readln()
+            input.trim()
+            when (input.lowercase()) {
+                "y", "yes" -> {
+                    println("Moving forward without database.")
+                    DATABASE_CONFIG = null
+                    validInput = true
+                }
+
+                "n", "no" -> {
+                    println("Please configure database in file $DB_CONFIG_FILE_NAME")
+                    return false
+                }
+
+                else -> {
+                    println("Invalid input!")
+                    println("Do you want to move forward without? (y/n)")
+                }
+            }
+        }
     }
 
     return true
@@ -169,13 +197,16 @@ private fun createConfigFile(file: File, bpRessourceFile: String) {
  * @return the database connection.
  * @throws SQLException if the database connection could not be created.
  */
-fun createDatabaseConnection(): Connection {
+fun createDatabaseConnection(): Connection? {
+    if (DATABASE_CONFIG == null) {
+        return null
+    }
     try {
         Class.forName("com.mysql.cj.jdbc.Driver")
         return DriverManager.getConnection(
-            DATABASE_CONFIG.databaseUrl,
-            DATABASE_CONFIG.databaseUser,
-            DATABASE_CONFIG.databasePassword
+            DATABASE_CONFIG!!.databaseUrl,
+            DATABASE_CONFIG!!.databaseUser,
+            DATABASE_CONFIG!!.databasePassword
         )
     } catch (e: Exception) {
         throw SQLException(e)

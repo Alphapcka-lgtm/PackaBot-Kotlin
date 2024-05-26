@@ -2,13 +2,13 @@ package utils
 
 import PROPERTIES
 import music.spotify.SpotifyProvider
-import org.alphapacka.com.YTMusic
-import org.alphapacka.com.enums.SearchFilters
-import org.alphapacka.com.pojos.search.SearchResult
 import se.michaelthelin.spotify.enums.ModelObjectType
 import se.michaelthelin.spotify.model_objects.specification.Album
 import se.michaelthelin.spotify.model_objects.specification.Playlist
 import se.michaelthelin.spotify.model_objects.specification.Track
+import yt_music.YTMusic
+import yt_music.enums.SearchFilters
+import yt_music.pojos.search.SearchResult
 import java.util.*
 
 /**
@@ -79,7 +79,7 @@ class SpotifyToYtMusicResolver {
             }
 
             if (song.title == track.name && hasAllArtists) {
-                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${song.video}")
+                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${song.videoId}")
             }
         }
 
@@ -98,7 +98,7 @@ class SpotifyToYtMusicResolver {
             }
 
             if (video.title == track.name && hasAllArtists) {
-                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${video.video}")
+                return Optional.of("$ytMusicBaseUrl$songVideoUrlKey${video.videoId}")
             }
         }
 
