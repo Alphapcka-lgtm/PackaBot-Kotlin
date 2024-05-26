@@ -3,3 +3,5 @@
 .vs/
 build/
 var/
+config.properties
+database_conf.properties
