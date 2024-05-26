@@ -34,14 +34,18 @@ class PackaBot(private val jdaBuilder: JDABuilder, m_DatabaseConnection: Connect
     /** coroutine to (re)connect to the database when the connection dies.*/
     private val databaseConnectionCoroutine = CoroutineScope(Dispatchers.Default)
 
-    private val hookUrl =
-        "https://discord.com/api/webhooks/1046897082503549028/VarZd0NxD-a4DNKpMNvby1g2FOrduWgDztGLmFDSjVQKJuFB6JedC7nrWIz_Y-p3NSsX"
-    private val statusHook = WebhookClient.withUrl(hookUrl)
+    private val hookUrl: String?
+    private val statusHook: WebhookClient?
 
     var m_DatabaseConnection: Connection? = m_DatabaseConnection
         private set
 
     init {
+        hookUrl = PROPERTIES.getProperty("status_hook_url")
+        if (!hookUrl.isNullOrBlank()) {
+            statusHook = WebhookClient.withUrl(hookUrl)
+        } else statusHook = null
+
         // await ready to always make sure that the jda instance is ready
         m_Jda.awaitReady()
         m_Jda.presence.setPresence(
@@ -58,12 +62,12 @@ class PackaBot(private val jdaBuilder: JDABuilder, m_DatabaseConnection: Connect
         SlashCommandController.databaseConnection = m_DatabaseConnection
         SlashCommandController.registerSlashCommands(this, null)
 
-        statusHook.send("${m_Jda.selfUser.asMention} is online.")
+        statusHook?.send("${m_Jda.selfUser.asMention} is online.")
 
         addEventListener()
 
         if ((m_DatabaseConnection == null) || m_DatabaseConnection.isClosed) {
-            statusHook.send("Bot has no database.").whenCompleteAsync { _, error ->
+            statusHook?.send("Bot has no database.")?.whenCompleteAsync { _, error ->
                 if (error != null) {
                     LOG.error("Error when sending Webhook message!", error)
                 }
